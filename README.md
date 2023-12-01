@@ -85,56 +85,7 @@ data
 ```
 You are now ready to run the demo and inference scripts.
 
-### Demo 
 
-We provide a script to run **ExPose** directly on images. 
-To get you started, we provide a sample folder, taken from [pexels](https://pexels.com),
-which can be processed with the the following command:
-```shell
-    python demo.py --image-folder samples \
-    --exp-cfg data/conf.yaml \
-    --show=False \
-    --output-folder OUTPUT_FOLDER \
-    --save-params [True/False] \
-    --save-vis [True/False] \
-    --save-mesh [True/False]
-```
-The script will use a *Keypoint R-CNN* from *torchvision* to detect people in
-the images and then produce a SMPL-X prediction for each using **ExPose**.
-You should see the following output for the sample image:
-
-|  ![Sample](samples/man-in-red-crew-neck-sweatshirt-photography-941693.png) | ![HD Overlay](images/hd_overlay.png) | 
-| --- | --- |
-
-### Inference
-
-The [inference](inference.py) script can be used to run inference on one of the supported
-datasets. For example, if you have a folder with images and OpenPose keypoints
-with the following structure:
-```bash
-folder
-├── images
-│   ├── img0001.jpg
-│   └── img0002.jpg
-│   └── img0002.jpg
-├── keypoints
-│   ├── img0001_keypoints.json
-│   └── img0002_keypoints.json
-│   └── img0002_keypoints.json
-```
-Then you can use the following command to run ExPose for each person:
-```shell
-python inference.py --exp-cfg data/conf.yaml \
-           --datasets openpose \
-           --exp-opts datasets.body.batch_size B datasets.body.openpose.data_folder folder \
-           --show=[True/False] \
-           --output-folder OUTPUT_FOLDER \
-           --save-params [True/False] \
-           --save-vis [True/False] \
-           --save-mesh [True/False]
-```
-You can select if you want to save the estimated parameters, meshes, and renderings by 
-setting the corresponding flags. 
  
 ## Citation
 
