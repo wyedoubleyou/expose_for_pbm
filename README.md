@@ -83,9 +83,13 @@ data
 ├── models
 │   ├── smplx
 ```
-You are now ready to run the demo and inference scripts.
+You are now ready to run the demo and inference scripts. Test the command below to see if ExPose is working. 
 
+```
+python demo.py --image-folder samples/test --exp-cfg data/conf.yaml --save-vis true --save-params true --save-mesh true --output-folder samples/output
+```
 
+**DONE**
  
 ## Citation
 
