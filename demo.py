@@ -14,7 +14,7 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
-
+import pickle
 import sys
 import os
 import os.path as osp
@@ -167,9 +167,12 @@ def weak_persp_to_blender(
     ''' Converts weak-perspective camera to a perspective camera
     '''
     if torch.is_tensor(camera_scale):
-        camera_scale = camera_scale.detach().cpu().numpy()
+        camera_scale = camera_scale.detach().cpu().numpy() #transl to note 
+        # print("camera_scale: ", camera_scale)
     if torch.is_tensor(camera_transl):
         camera_transl = camera_transl.detach().cpu().numpy()
+        # print("camera_transl: ", camera_transl)
+
 
     output = defaultdict(lambda: [])
     for ii, target in enumerate(targets):
@@ -236,14 +239,20 @@ def main(
 
     expose_dloader = preprocess_images(
         image_folder, exp_cfg, batch_size=rcnn_batch, device=device)
-
+    
     demo_output_folder = osp.expanduser(osp.expandvars(demo_output_folder))
     logger.info(f'Saving results to: {demo_output_folder}')
     os.makedirs(demo_output_folder, exist_ok=True)
 
+    #yw to note
     model = SMPLXNet(exp_cfg)
+    # print("\n First model: ", model)
+    # f = open("first_model.txt","w")
+    # f.write( str(model) )
+    # f.close()
+
     try:
-        model = model.to(device=device)
+        model = model.to(device=device) #set to GPU 
     except RuntimeError:
         # Re-submit in case of a device error
         sys.exit(3)
@@ -259,7 +268,7 @@ def main(
         if key in extra_checkpoint_data:
             arguments[key] = extra_checkpoint_data[key]
 
-    model = model.eval()
+    model = model.eval() 
 
     means = np.array(exp_cfg.datasets.body.transforms.mean)
     std = np.array(exp_cfg.datasets.body.transforms.std)
@@ -272,8 +281,12 @@ def main(
 
     total_time = 0
     cnt = 0
-    for bidx, batch in enumerate(tqdm(expose_dloader, dynamic_ncols=True)):
+    #yw to note: find out why repeat 2 times? 
+    # len(expose_dloader) = 2
+    print("len(expose_dloader) : ", len(expose_dloader))
 
+    for bidx, batch in enumerate(tqdm(expose_dloader, dynamic_ncols=True)):
+        print("\n bidx: ", bidx)
         full_imgs_list, body_imgs, body_targets = batch
         if full_imgs_list is None:
             continue
@@ -281,12 +294,21 @@ def main(
         full_imgs = to_image_list(full_imgs_list)
         body_imgs = body_imgs.to(device=device)
         body_targets = [target.to(device) for target in body_targets]
-        full_imgs = full_imgs.to(device=device)
+        full_imgs = full_imgs.to(device=device) #<expose.data.targets.image_list.ImageList object at 0x7fa55d8348e0>
 
         torch.cuda.synchronize()
         start = time.perf_counter()
+
+        #yw to note : already have trans in model_output dict 
         model_output = model(body_imgs, body_targets, full_imgs=full_imgs,
                              device=device)
+        # print("\nmodel_output at demo.py \n")
+        # print(type(model_output)) # <class 'dict'>
+
+        # print(model_output.keys()) # dict_keys(['body', 'losses'])
+        
+
+
         torch.cuda.synchronize()
         elapsed = time.perf_counter() - start
         cnt += 1
@@ -403,6 +425,8 @@ def main(
                         out_img[key], [0, 2, 3, 1]) * 255, 0, 255).astype(
                             np.uint8)
 
+        
+        # len(body_targets) = 1
         for idx in tqdm(range(len(body_targets)), 'Saving ...'):
             fname = body_targets[idx].get_field('fname')
             curr_out_path = osp.join(demo_output_folder, fname)
@@ -430,6 +454,7 @@ def main(
                 mesh_fname = osp.join(curr_out_path, f'{fname}.ply')
                 o3d.io.write_triangle_mesh(mesh_fname, expose_mesh)
 
+            #YIWEI TO NOTE (PARAMETER SAVE HERE)
             if save_params:
                 params_fname = osp.join(curr_out_path, f'{fname}_params.npz')
                 out_params = dict(fname=fname)
@@ -444,6 +469,31 @@ def main(
                         out_params[key] = val[idx].item()
                     else:
                         out_params[key] = val[idx]
+                
+                if bidx == 0 :
+                    print("\n this is print out when bidx == 0 \n")
+                    text_name = osp.join(curr_out_path, f'{fname}_1.pkl')
+                    # f1 = open(text_name, "a")
+                    # f1.write("Now the file has more content!")
+                    # f1.close()
+                    with open(text_name, 'wb') as handle:
+                        pickle.dump(out_params, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                if bidx == 1 :
+                    text2_name = osp.join(curr_out_path, f'{fname}_2.pkl')
+                    with open(text2_name, 'wb') as handle:
+                        pickle.dump(out_params, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+                #YW TO NOTE: (7/10 modify) straight add dict to .pkl file  (SUCCESS)
+                # print("\n\n this code run until here 1  \n ") #got until here 
+                #save dict to pkl using pickle 
+                # print("\n\n dict: ", out_params)
+                print("\n out_params['transl]: ", out_params['transl'])
+
+                # with open('demo_output/yw_test/expose_itw_0.pkl', 'wb') as handle:
+                #     pickle.dump(out_params, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+                # out_params:  {'fname': 'itw_0.png_000'} 
+
                 np.savez_compressed(params_fname, **out_params)
 
             if show:
@@ -484,13 +534,13 @@ if __name__ == '__main__':
     description = 'PyTorch SMPL-X Regressor Demo'
     parser = argparse.ArgumentParser(formatter_class=arg_formatter,
                                      description=description)
-
+    # YW TO NOTE: OUTPUT FILE
     parser.add_argument('--image-folder', type=str, dest='image_folder',
                         help='The folder with images that will be processed')
     parser.add_argument('--exp-cfg', type=str, dest='exp_cfg',
                         help='The configuration of the experiment')
     parser.add_argument('--output-folder', dest='output_folder',
-                        default='demo_output', type=str,
+                        default='expose_output', type=str,
                         help='The folder where the demo renderings will be' +
                         ' saved')
     parser.add_argument('--exp-opts', default=[], dest='exp_opts',
@@ -550,6 +600,10 @@ if __name__ == '__main__':
     use_face_contour = cfg.datasets.use_face_contour
     set_face_contour(cfg, use_face_contour=use_face_contour)
 
+
+    # print("\n\n code run until here \n\n") # got until here 
+
+    
     with threadpool_limits(limits=1):
         main(
             image_folder,
