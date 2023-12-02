@@ -113,16 +113,3 @@ If you find this Model & Software useful in your research we would kindly ask yo
 }
 ```
 
-## Acknowledgments
-
-We thank Haiwen Feng for the FLAME fits,
-Nikos Kolotouros, Muhammed Kocabas and Nikos Athanasiou for helpful discussions,
-Sai Kumar Dwivedi and Lea Muller for proofreading,
-Mason Landry and Valerie Callaghan for video voiceovers.
-
-## Contact
-The code of this repository was implemented by [Vassilis Choutas](mailto:vassilis.choutas@tuebingen.mpg.de).
-
-For questions, please contact [expose@tue.mpg.de](mailto:expose@tue.mpg.de). 
-
-For commercial licensing (and all related questions for business applications), please contact [ps-licensing@tue.mpg.de](mailto:ps-licensing@tue.mpg.de).
